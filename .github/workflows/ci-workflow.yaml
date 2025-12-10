@@ -45,7 +45,7 @@ jobs:
           docker push $REGISTRY_URL/$REGISTRY_USERNAME/$IMAGE_NAME:$TAG
 
   # ---------------------------------------------------------------------------
-  # JOB 2: Template & Commit (Manual Approval via Environment)
+  # JOB 2: Template & Commit
   # ---------------------------------------------------------------------------
   update-manifest:
     needs: build-and-push
@@ -96,7 +96,7 @@ jobs:
           # Check if there are changes
           if [[ -n $(git status -s) ]]; then
             git add ${{ env.KUSTOMIZE_DIR }}/kustomization.yaml
-            git commit -m "Update image tag to $TAG [skip ci]"
+            git commit -m "Update image tag to $TAG"
             git push origin ${{ github.ref_name }}
             echo "Manifest updated and pushed successfully."
           else
