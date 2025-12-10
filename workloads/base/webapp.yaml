@@ -30,8 +30,7 @@ metadata:
   labels:
     app: web
 spec:
-  selector:
-    app: web
+  selector: {}
   ports:
     - name: http
       port: 8081

@@ -3,14 +3,14 @@ kind: Kustomization
 resources:
   - ../base/webapp.yaml
 
-namePrefix: "user01-"
+namePrefix: "user02-"
 
 images:
   - name: "nginx"
     newName: "nginx"
-    newTag: "1.28"
+    newTag: "1.27"
 
 labels:
   - pairs:
-      app.kubernetes.io/owner: "user01"
+      app.kubernetes.io/owner: "user02"
     includeSelectors: true
