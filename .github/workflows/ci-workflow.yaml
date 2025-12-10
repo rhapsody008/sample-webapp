@@ -12,7 +12,7 @@ env:
   IMAGE_NAME: "zy-app"
   
   # GitOps Configuration
-  GITOPS_REPO: "rhapsody008/gitops-config-repo"
+  GITOPS_REPO: "rhapsody008/devops-lab-gitops"
   CONFIG_REPO_BRANCH: "user01"
   KUSTOMIZE_DIR: "workloads"
   
