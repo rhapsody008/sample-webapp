@@ -12,8 +12,9 @@ env:
   IMAGE_NAME: "zy-app"
   
   # GitOps Configuration
+  GITOPS_REPO: "rhapsody008/gitops-config-repo"
   CONFIG_REPO_BRANCH: "user01"
-  KUSTOMIZE_DIR: "deploy/workloads"
+  KUSTOMIZE_DIR: "workloads"
   
   # The branch that triggers this workflow
   TRIGGER_BRANCH: "user01"
@@ -56,16 +57,17 @@ jobs:
     environment: production 
     
     steps:
-      - name: Checkout Code
+      - name: Checkout GitOps Repo
         uses: actions/checkout@v4
         with:
           # We need a token with write access to push changes back
+          repository: ${{ env.GITOPS_REPO }}
           token: ${{ secrets.ACCESS_TOKEN }} 
           ref: ${{ env.CONFIG_REPO_BRANCH }}
-          fetch-depth: 0
+          path: gitops
 
       - name: Set Short SHA as TAG
-        run: echo "TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+        run: echo "TAG=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
 
       - name: Generate Kustomize Manifest
         run: |
