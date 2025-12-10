@@ -1,0 +1,60 @@
+sequenceDiagram
+    autonumber
+    actor Dev as Developer (User)
+    box "CI Phase (GitHub Actions)"
+        participant AppRepo as App Repo (NodeJS)
+        participant CI as GH Actions Runner
+        participant Registry as Docker Registry
+        participant GitOps as GitOps Repo (Manifests)
+    end
+    box "CD Phase (NKP & Flux)"
+        participant Flux as Flux CD (Mgmt Cluster)
+        participant Cluster as NKP Workload Cluster
+    end
+
+    note over Dev, GitOps: Branch used here is "user01"
+
+    %% === CI PHASE ===
+    rect rgb(240, 248, 255)
+    note right of Dev: CI - Docker Image Build
+    Dev->>AppRepo: 1. Push code change to branch "user01"
+    activate AppRepo
+    AppRepo->>CI: 2. Trigger CI Workflow (push event)
+    deactivate AppRepo
+    
+    activate CI
+    CI->>AppRepo: Checkout App code
+    CI->>CI: 3. Build Docker Image (from Dockerfile)
+    CI->>Registry: 4. Login & Push Image (new tag)
+    activate Registry
+    Registry-->>CI: Image stored
+    deactivate Registry
+
+    CI->>GitOps: Checkout GitOps repo (branch "user01")
+    activate GitOps
+    CI->>CI: Generate new kustomization.yaml (update tag)
+    CI->>GitOps: 5. Commit & Push updated manifest
+    deactivate GitOps
+    deactivate CI
+    end
+
+    %% === CD PHASE ===
+    rect rgb(255, 245, 245)
+    note right of Dev: CD - Deploy to NKP
+    activate Flux
+    Flux->>GitOps: 6. Detect change on branch "user01" (Polling/Webhook)
+    activate GitOps
+    GitOps-->>Flux: Pull new manifests (reconciliation)
+    deactivate GitOps
+
+    Flux->>Cluster: 7. Apply new configuration (Sync)
+    activate Cluster
+    Cluster->>Registry: Pull new Docker Image tag
+    activate Registry
+    Registry-->>Cluster: Return Image layer(s)
+    deactivate Registry
+    Cluster->>Cluster: 8. Rolling update Pods
+    note over Cluster: Web page updated (~3 mins)
+    deactivate Cluster
+    deactivate Flux
+    end
