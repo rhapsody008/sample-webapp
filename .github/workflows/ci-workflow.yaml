@@ -6,7 +6,7 @@ on:
       - "user01"
 
 env:
-  # Configuration
+  # Configuration - to change to Harbor once it's available
   REGISTRY_URL: "docker.io"
   REGISTRY_USERNAME: "rhapsody008"
   IMAGE_NAME: "zy-app"
@@ -88,7 +88,8 @@ jobs:
               includeSelectors: true
 
           images:
-          - name: ${{ env.IMAGE_NAME }}
+          - name: myapp
+            newName: ${{ env.IMAGE_NAME }}
             newTag: ${{ env.TAG }}
           EOF
 
