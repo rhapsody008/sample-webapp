@@ -1,0 +1,96 @@
+name: CI Workflow
+
+on: [push]
+
+stages:
+  - build
+  - deploy
+
+variables:
+  # Configuration
+  REGISTRY_URL: "https://docker.io"
+  REGISTRY_USERNAME: "rhapsody008"
+  IMAGE_NAME: "zy-app"
+  TAG: $CI_COMMIT_SHORT_SHA
+  
+  # GitOps Configuration
+  CONFIG_REPO_BRANCH: "user01"
+  KUSTOMIZE_DIR: "cd/workloads"
+  
+  # The branch that triggers this workflow
+  TRIGGER_BRANCH: "user01"
+
+# ---------------------------------------------------------------------------
+# STAGE 1: Build and Push (Auto-runs on commit to main)
+# ---------------------------------------------------------------------------
+build-and-push:
+  stage: build
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  before_script:
+    - echo ${{ secrets.REGISTRY_PASSWORD }} | docker login "$REGISTRY_URL" -u "$REGISTRY_USERNAME" --password-stdin
+  script:
+    - echo "Building image..."
+    - docker build -t $REGISTRY_URL/$IMAGE_NAME:$TAG .
+    - echo "Pushing image to Registry..."
+    - docker push $REGISTRY_URL/$IMAGE_NAME:$TAG
+  rules:
+    # Triggers automatically when a commit is pushed to the TRIGGER_BRANCH
+    - if: '$CI_COMMIT_BRANCH == $TRIGGER_BRANCH'
+
+# ---------------------------------------------------------------------------
+# STAGE 2: Template & Commit (Requires Manual Approval)
+# ---------------------------------------------------------------------------
+update-manifest:
+  stage: deploy
+  image: 
+    name: alpine/git:latest
+    entrypoint: [""]
+  needs:
+    - job: build-and-push
+      artifacts: false
+  script:
+    - git config --global user.email "yi.zhou@nutanix"
+    - git config --global user.name "Zhou Yi"
+    
+    # Clone and Checkout
+    - git clone https://oauth2:${{ secrets.GITHUB_ACCESS_TOKEN }}@${{ github.repositoryUrl }} config-repo
+    - cd config-repo
+    - git checkout $CONFIG_REPO_BRANCH
+    - cd $KUSTOMIZE_DIR
+    
+    - |
+      cat <<EOF > kustomization.yaml
+      apiVersion: kustomize.config.k8s.io/v1beta1
+      kind: Kustomization
+      resources:
+        - webapp.yaml
+
+      namePrefix: "${TRIGGER_BRANCH}-"
+
+      labels:
+        - pairs:
+            app.kubernetes.io/owner: ${TRIGGER_BRANCH}
+          includeSelectors: true
+
+      images:
+      - name: ${IMAGE_NAME}
+        newTag: ${TAG}
+      EOF
+
+    # Commit and Push
+    - git add kustomization.yaml
+    - |
+      if [[ -n $(git status -s) ]]; then
+        git commit -m "Update image tag to $TAG [skip ci]";
+        git push origin $CONFIG_REPO_BRANCH;
+        echo "Manifest updated and pushed successfully.";
+      else
+        echo "No changes to commit.";
+      fi
+  rules:
+    # Only available on the trigger branch
+    - if: '$CI_COMMIT_BRANCH == $TRIGGER_BRANCH'
+      when: manual         # <--- Requires user to click "Play" button
+      allow_failure: false # Pipeline status will show 'blocked' until clicked

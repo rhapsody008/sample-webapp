@@ -5,7 +5,6 @@ metadata:
 spec:
   stripPrefix:
     prefixes:
-      - /zybase
       - /user01
       - /user02
 
@@ -17,7 +16,7 @@ metadata:
     kubernetes.io/ingress.class: kommander-traefik
     traefik.ingress.kubernetes.io/router.tls: "false"
     traefik.ingress.kubernetes.io/router.middlewares: zyproj-web@kubernetescrd
-  name: web-ingress
+  name: web
   namespace: zyproj
 spec:
   rules:
@@ -25,16 +24,7 @@ spec:
       paths:
       - backend:
           service:
-            name: web
-            port:
-              number: 8081
-        path: /zybase
-        pathType: Exact
-  - http:
-      paths:
-      - backend:
-          service:
-            name: user01-web-dev
+            name: user01-web
             port:
               number: 8081
         path: /user01
@@ -43,7 +33,7 @@ spec:
       paths:
       - backend:
           service:
-            name: user02-web-dev
+            name: user02-web
             port:
               number: 8081
         path: /user02
