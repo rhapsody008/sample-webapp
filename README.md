@@ -16,7 +16,7 @@ git add server.js
 git commit -m "Updates for User01"
 git push origin user01
 ```
-4. Wait and see the changes reflected on web page
+4. Wait and see the changes reflected on web page e.g. [sample web app](https://10.54.93.221/user01)
 
 ## Workflow Explained
 
