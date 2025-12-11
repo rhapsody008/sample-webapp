@@ -1,15 +1,30 @@
 name: CI Workflow
 
 on:
-  push:
-    branches:
-      - "main"
+  # Test only: select user
+  workflow_dispatch:
+    inputs:
+      user:
+        description: 'User'
+        required: true
+        type: choice
+        default: 'user99'
+        options:
+          - user01
+          - user02
+          - user03
+          - user04
+          - user05
+  # push:
+  #   branches:
+  #     - "main"
+  #     - "dev"
 
 env:
   # Configuration - to change to Harbor once it's available
   REGISTRY_URL: "docker.io"
   REGISTRY_USERNAME: "rhapsody008"
-  IMAGE_NAME: "zy-app"
+  IMAGE_NAME: "sample-nodejs-webapp"
   
   # GitOps Configuration
   GITOPS_REPO: "rhapsody008/devops-lab-gitops"
@@ -26,7 +41,7 @@ jobs:
 
       - name: Set Short SHA as TAG
         id: vars
-        run: echo "TAG=${{ vars.USER }}-$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+        run: echo "TAG=${{ github.event.inputs.user }}-$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       - name: Login to Docker Registry
         uses: docker/login-action@v3
@@ -49,7 +64,7 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     # To make this "Manual", go to Repo Settings -> Environments -> Create "production" -> Add Reviewers
-    environment: production 
+    # environment: production 
     
     steps:
       - name: Checkout GitOps Repo
@@ -61,14 +76,14 @@ jobs:
           ref: main
 
       - name: Set Short SHA as TAG
-        run: echo "TAG=$(echo ${{ vars.USER }}-${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
+        run: echo "TAG=$(echo ${{ github.event.inputs.user }}-${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
 
       - name: Generate Kustomize Manifest
         run: |
           git config --global user.email "yi.zhou@nutanix.com"
           git config --global user.name "Zhou Yi"
 
-          cd ./workloads/${{ vars.USER }}
+          cd ./workloads/${{ github.event.inputs.user }}
           
           cat <<EOF > kustomization.yaml
           apiVersion: kustomize.config.k8s.io/v1beta1
@@ -76,11 +91,11 @@ jobs:
           resources:
             - webapp.yaml
 
-          namePrefix: "${{ vars.USER }}-"
+          namePrefix: "${{ github.event.inputs.user }}-"
 
           labels:
             - pairs:
-                app.kubernetes.io/owner: ${{ vars.USER }}
+                app.kubernetes.io/owner: ${{ github.event.inputs.user }}
               includeSelectors: true
 
           images:
@@ -93,7 +108,7 @@ jobs:
         run: |
           # Check if there are changes
           if [[ -n $(git status -s) ]]; then
-            git add ./workloads/${{ vars.USER }}/kustomization.yaml
+            git add ./workloads/${{ github.event.inputs.user }}/kustomization.yaml
             git commit -m "Update image tag to $TAG"
             git push origin main
             echo "Manifest updated and pushed successfully."
