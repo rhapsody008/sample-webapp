@@ -1,0 +1,16 @@
+---
+apiVersion: workspaces.kommander.mesosphere.io/v1alpha1
+kind: Project
+metadata:
+  annotations:
+    kommander.mesosphere.io/description: "Project space for the NKP DevOps Lab"
+    kommander.mesosphere.io/display-name: "NKP DevOps Lab Project"
+  name: nkp-devops-lab
+  namespace: kommander-default-workspace
+spec:
+  namespaceName: nkp-devops-lab
+  placement:
+    clusters:
+    - name: nkp-dev-01
+  workspaceRef:
+    name: default-workspace
