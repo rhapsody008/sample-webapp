@@ -1,5 +1,5 @@
 # --- Stage 1: Build & Dependencies ---
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /usr/src/app
 
@@ -7,7 +7,7 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 
 # Install all dependencies (including devDependencies for potential build steps)
-RUN npm ci
+RUN npm install
 
 # Copy the rest of the source code
 COPY . .
@@ -16,7 +16,7 @@ COPY . .
 # RUN npm run build
 
 # --- Stage 2: Production Runtime ---
-FROM node:18-alpine AS runner
+FROM node:20-alpine AS runner
 
 # Set environment to production
 ENV NODE_ENV=production

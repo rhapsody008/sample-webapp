@@ -5,12 +5,7 @@ resources:
 
 namePrefix: "user##-"
 
-labels:
-  - pairs:
-      app.kubernetes.io/owner: user##
-    includeSelectors: true
-
 images:
 - name: myapp
-  newName: rhapsody008/sample-nodejs-webapp
+  newName: rhapsody008/sample-webapp
   newTag: user##-abcdefg
