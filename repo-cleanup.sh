@@ -2,8 +2,7 @@
 
 # --- CONFIGURATION ---
 GITLAB_URL="https://gitlab.com"
-# REPLACE THIS: Revoke the old token and put the new one here
-PRIVATE_TOKEN="glpat-MyZVqp522nSwGm8W5P6vc286MQp1OmpiMXVzCw.01.1208so8zv" 
+PRIVATE_TOKEN="" 
 PARENT_NAMESPACE_ID="121715013"
 NUM_USERS=2
 

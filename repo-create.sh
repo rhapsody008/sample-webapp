@@ -2,7 +2,7 @@
 
 # --- CONFIGURATION ---
 GITLAB_URL="https://gitlab.com"
-PRIVATE_TOKEN="glpat-MyZVqp522nSwGm8W5P6vc286MQp1OmpiMXVzCw.01.1208so8zv" # Requires 'api' scope
+PRIVATE_TOKEN="" # Requires 'api' scope
 PARENT_NAMESPACE_ID="121715013"
 NUM_USERS=2
 
@@ -44,13 +44,15 @@ for i in $(seq -f "%02g" 1 $NUM_USERS); do
     echo "Setting up environment for User $i..."
 
     # 1. Create GitOps Project
+    echo ""
     GITOPS_RES=$(curl -k --silent --request POST "$GITLAB_URL/api/v4/projects" \
         --header "PRIVATE-TOKEN: $PRIVATE_TOKEN" \
-        --data "name=$GITOPS_NAME&namespace_id=$PARENT_NAMESPACE_ID&initialize_with_readme=false")
+        --data "name=$GITOPS_NAME&namespace_id=$PARENT_NAMESPACE_ID&initialize_with_readme=false&visibility=public")
     GITOPS_ID=$(echo $GITOPS_RES | jq -r '.id')
     GITOPS_PATH=$(echo $GITOPS_RES | jq -r '.path_with_namespace')
 
     # 3. Create WebApp Project
+    echo ""
     APP_RES=$(curl -k --silent --request POST "$GITLAB_URL/api/v4/projects" \
         --header "PRIVATE-TOKEN: $PRIVATE_TOKEN" \
         --data "name=$APP_NAME&namespace_id=$PARENT_NAMESPACE_ID")
@@ -64,6 +66,7 @@ for i in $(seq -f "%02g" 1 $NUM_USERS); do
       username: user$i"
 
     # 5. Push Files to WebApp Repo (Go files + the new .gitlab-ci.yml)
+    echo ""
     PAYLOAD_APP=$(jq -n --arg docker "$DOCKER_C" --arg server "$SERVER_C" --arg ci "$CI_CONFIG" \
         '{branch: "main", commit_message: "Initial app files and CI config", actions: [
             {action: "create", file_path: "Dockerfile", content: $docker},

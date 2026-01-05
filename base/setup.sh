@@ -2,18 +2,18 @@
 
 PROJECT_NAME="nkp-devops-lab"
 PROJECT_NAMESPACE="nkp-devops-lab"
-REPO_URL_PREFIX="https://10.38.193.146/lab/gitops-"
+REPO_URL_PREFIX="https://gitlab.com/devops-lab5952301/gitops-"
 SECRET_NAME="git"
 BRANCH="main"
 OUTPUT_PROJECT_FILE="project.yaml"
 OUTPUT_GITOPS_FILE="gitops-sources.yaml"
-NKP_WORKLOAD_CLUSTER_NAME="nkp-dev"
+NKP_WORKLOAD_CLUSTER_NAME="nkp-dev-01"
 
 MIDDLEWARE_NAME="stripprefixes"
 INGRESS_NAME="nkp-devops-lab-web"
 INGRESS_CLASS="kommander-traefik"
 TLS_ENABLED="false"   # "true" or "false"
-SERVICE_PORT=3000
+SERVICE_PORT=8080
 OUTPUT_INGRESS_FILE="ingress.yaml"
 
 START=1
@@ -48,9 +48,6 @@ EOF
 
 echo "Generated project YAML: $OUTPUT_PROJECT_FILE"
 
-echo "Creating Project..."
-kubectl apply -f $OUTPUT_PROJECT_FILE
-
 ###################
 #  GitOps Sources #
 ###################
@@ -78,9 +75,6 @@ EOF
 done
 
 echo "Generated GitOps Source YAML: $OUTPUT_GITOPS_FILE"
-
-echo "Creating GitOps Sources..."
-kubectl apply -f $OUTPUT_GITOPS_FILE
 
 #############
 #  Ingress #
@@ -139,6 +133,4 @@ done
 
 echo "Generated Ingress File: $OUTPUT_INGRESS_FILE"
 
-echo "Creating Ingress..."
-kubectl apply -f $OUTPUT_INGRESS_FILE
-
+echo "!!Apply project & gitops in Mgmt Cluster and Ingress & secret in Workload Cluster!!"

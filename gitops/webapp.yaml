@@ -19,8 +19,11 @@ spec:
           image: nginx:latest
           ports:
             - name: http
-              containerPort: 3000
+              containerPort: 8080
           resources: {}
+      imagePullSecrets:
+        - name: regcred
+          namespace: nkp-devops-lab
 
 ---
 apiVersion: v1
@@ -33,7 +36,7 @@ spec:
   selector: {}
   ports:
     - name: http
-      port: 3000
-      targetPort: 3000
+      port: 8080
+      targetPort: 8080
   type: ClusterIP
 
