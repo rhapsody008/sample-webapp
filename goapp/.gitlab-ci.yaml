@@ -1,0 +1,6 @@
+include:
+  - project: 'devops-lab/ci-templates'
+    file: 'pipeline.yaml'
+    inputs:
+      username: user$1
+      replicas: 1

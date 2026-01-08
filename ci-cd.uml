@@ -1,0 +1,27 @@
+sequenceDiagram
+    autonumber
+    participant Dev as Developer
+    participant GL as GitLab CI
+    participant Runner as GitLab Runner
+    participant Harbor as Harbor Registry
+    participant GitOps as gitops-user## Repo
+    participant Flux as NKP Flux CD
+    participant K8s as K8s Cluster (Namespace)
+
+    Dev->>GL: Push Code Change
+    GL->>Runner: Trigger Pipeline
+    
+    rect rgb(240, 240, 240)
+        Note over Runner, Harbor: Continuous Integration (CI)
+        Runner->>Runner: Build Container Image
+        Runner->>Harbor: Push Image with New Tag
+    end
+
+    Runner->>GitOps: Update image tag in kustomization.yaml
+    
+    rect rgb(220, 240, 225)
+        Note over GitOps, K8s: Continuous Deployment (CD)
+        Flux->>GitOps: Monitor Repo (Polling/Webhook)
+        Flux->>GitOps: Detect Change in kustomization.yaml
+        Flux->>K8s: Reconcile / Deploy New Image
+    end
