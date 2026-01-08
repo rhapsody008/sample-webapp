@@ -3,6 +3,9 @@ spec:
     username:
       default: "user99"
       description: "The ID of the user (e.g., user01)"
+    replicas:
+      default: 1
+      description: "Number of replicas for the deployment"
 
 ---
 stages:
@@ -10,21 +13,27 @@ stages:
   - deploy
 
 variables:
-  REGISTRY_URL: "harbor.yoloz.cloud"
-  REGISTRY_USERNAME: "yi.zhou"
-  REGISTRY_PROJECT: "lab"
+  REGISTRY_URL: "registry.ntnxlab.local"
+  REGISTRY_USERNAME: "admin"
+  REGISTRY_PROJECT: "library"
   IMAGE_NAME: "sample-webapp"
   # This constructs the base URL for the user-specific repo
-  GITOPS_BASE_URL: "gitlab.com/${CI_PROJECT_NAMESPACE}/gitops-$[[ inputs.username ]].git"
+  GITLAB_URL: "gitlab.ntnxlab.local"
+  GITOPS_BASE_URL: "${GITLAB_URL}/${CI_PROJECT_NAMESPACE}/gitops-$[[ inputs.username ]].git"
+  # Disable Docker TLS for DinD
+  DOCKER_TLS_CERTDIR: ""
 
 # ---------------------------------------------------------------------------
 # JOB 1: Build and Push
 # ---------------------------------------------------------------------------
 build-and-push:
+  tags:
+    - labci
   stage: build
-  image: $REGISTRY_URL/$REGISTRY_PROJECT/docker:24.0.5-dind
+  image: $REGISTRY_URL/$REGISTRY_PROJECT/docker:24.0.5
   services:
-    - docker:24.0.5-dind
+    - name: $REGISTRY_URL/$REGISTRY_PROJECT/docker:24.0.5-dind
+      alias: docker
   variables:
     # Assigning input to a local variable for easier use in shell scripts
     CURRENT_USER: $[[ inputs.username ]]
@@ -41,6 +50,8 @@ build-and-push:
 # JOB 2: Template & Commit
 # ---------------------------------------------------------------------------
 update-manifest:
+  tags:
+    - labci
   stage: deploy
   image: $REGISTRY_URL/$REGISTRY_PROJECT/kubectl-kustomize:latest
   needs:
@@ -51,10 +62,13 @@ update-manifest:
     - apk add --no-cache git
     - git config --global user.email "yi.zhou@nutanix.com"
     - git config --global user.name "Zhou Yi"
-    - git config --global url."https://oauth2:${GITOPS_ACCESS_TOKEN}@gitlab.com/".insteadOf "https://gitlab.com/"
+    - git config --global url."https://oauth2:${GITOPS_ACCESS_TOKEN}@${GITLAB_URL}/".insteadOf "https://$GITLAB_URL/"
     - git config --global --add safe.directory "$CI_PROJECT_DIR"
     - git config --global --add safe.directory "*"
   script:
+    - openssl s_client -showcerts -connect ${GITLAB_URL}:443 </dev/null 2>/dev/null | openssl x509 -outform PEM > /tmp/ca.crt
+    - git config --global http.sslCAInfo "/tmp/ca.crt"
+
     - export TAG="${CURRENT_USER}-$(echo $CI_COMMIT_SHA | cut -c1-8)"
     
     # 1. Clone the user-specific GitOps repo
@@ -64,6 +78,7 @@ update-manifest:
     # 2. Update the root kustomization.yaml
     - kustomize edit set image nginx=${REGISTRY_URL}/${REGISTRY_PROJECT}/${IMAGE_NAME}:${TAG}
     - kustomize edit set nameprefix "${CURRENT_USER}-"
+    - kustomize edit set replicas web=$[[ inputs.replicas ]]
     - kustomize edit add label app.kubernetes.io/owner:${CURRENT_USER} --force 
 
     # 3. Standard Git Push logic

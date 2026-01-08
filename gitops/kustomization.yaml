@@ -7,8 +7,11 @@ namePrefix: user##-
 
 images:
 - name: nginx
-  newName: rhapsody008/sample-webapp
+  newName: registry.ntnxlab.local/library/sample-webapp
   newTag: user##-abcdefg
 
 commonLabels:
   app.kubernetes.io/owner: user##
+
+replicas:
+  web: 1

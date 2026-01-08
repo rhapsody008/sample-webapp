@@ -6,9 +6,7 @@ import (
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	// ------** Change made here **------
 	fmt.Fprintf(w, "Hello from Nutanix!")
-	// ---------------------------------
 }
 
 func main() {

@@ -1,4 +1,3 @@
-
 ---
 apiVersion: dispatch.d2iq.io/v1alpha2
 kind: GitopsRepository
@@ -6,12 +5,11 @@ metadata:
   name: user01
   namespace: nkp-devops-lab
 spec:
-  cloneUrl: https://gitlab.com/devops-lab5952301/gitops-user01.git
+  cloneUrl: https://gitlab.ntnxlab.local/lab/gitops-user01.git
   secret: git
   template:
     ref:
       branch: main
-
 ---
 apiVersion: dispatch.d2iq.io/v1alpha2
 kind: GitopsRepository
@@ -19,7 +17,19 @@ metadata:
   name: user02
   namespace: nkp-devops-lab
 spec:
-  cloneUrl: https://gitlab.com/devops-lab5952301/gitops-user02.git
+  cloneUrl: https://gitlab.ntnxlab.local/lab/gitops-user02.git
+  secret: git
+  template:
+    ref:
+      branch: main
+---
+apiVersion: dispatch.d2iq.io/v1alpha2
+kind: GitopsRepository
+metadata:
+  name: user03
+  namespace: nkp-devops-lab
+spec:
+  cloneUrl: https://gitlab.ntnxlab.local/lab/gitops-user03.git
   secret: git
   template:
     ref:

@@ -21,9 +21,6 @@ spec:
             - name: http
               containerPort: 8080
           resources: {}
-      imagePullSecrets:
-        - name: regcred
-          namespace: nkp-devops-lab
 
 ---
 apiVersion: v1

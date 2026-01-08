@@ -1,32 +1,45 @@
 #!/bin/bash
 
+# --- Variables ---
 PROJECT_NAME="nkp-devops-lab"
 PROJECT_NAMESPACE="nkp-devops-lab"
-REPO_URL_PREFIX="https://gitlab.com/devops-lab5952301/gitops-"
+REPO_URL_PREFIX="https://gitlab.ntnxlab.local/lab/gitops-"
 SECRET_NAME="git"
 BRANCH="main"
+
+# Output Files
 OUTPUT_PROJECT_FILE="project.yaml"
 OUTPUT_GITOPS_FILE="gitops-sources.yaml"
-NKP_WORKLOAD_CLUSTER_NAME="nkp-dev-01"
+OUTPUT_SECRET_FILE="secret.yaml"
+OUTPUT_INGRESS_FILE="ingress.yaml"
 
+# Cluster / Ingress Config
+NKP_WORKLOAD_CLUSTER_NAME="nkp-dev"
 MIDDLEWARE_NAME="stripprefixes"
 INGRESS_NAME="nkp-devops-lab-web"
 INGRESS_CLASS="kommander-traefik"
-TLS_ENABLED="false"   # "true" or "false"
+TLS_ENABLED="false"
 SERVICE_PORT=8080
-OUTPUT_INGRESS_FILE="ingress.yaml"
 
+# --- PAT INPUT ---
+# You can set this as an environment variable before running: export GITLAB_PAT="your_token_here"
+# Or edit the line below:
+GITLAB_PAT="${GITLAB_PAT:-your_token_here}"
+GITLAB_USER="root"
+
+# Encode to Base64 for K8s Secret
+GITLAB_PAT_BASE64=$(echo -n "$GITLAB_PAT" | base64)
+GITLAB_USER_BASE64=$(echo -n "$GITLAB_USER" | base64)
+
+# Range for users
 START=1
-END=2
+END=3
 
 ###########
 # Project #
 ###########
 
 echo "Generating project YAML..."
-
-: > "$OUTPUT_PROJECT_FILE"  # truncate existing file
-
 cat > "$OUTPUT_PROJECT_FILE" <<EOF
 ---
 apiVersion: workspaces.kommander.mesosphere.io/v1alpha1
@@ -46,19 +59,33 @@ spec:
     name: default-workspace
 EOF
 
-echo "Generated project YAML: $OUTPUT_PROJECT_FILE"
+##########
+# Secret #
+##########
+
+echo "Generating secret YAML..."
+cat > "$OUTPUT_SECRET_FILE" <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ${SECRET_NAME}
+  namespace: ${PROJECT_NAMESPACE}
+type: Opaque
+data:
+  password: ${GITLAB_PAT_BASE64}
+  username: ${GITLAB_USER_BASE64}
+EOF
 
 ###################
 #  GitOps Sources #
 ###################
 
-: > "$OUTPUT_GITOPS_FILE"  # truncate existing file
-
+echo "Generating GitOps Source YAML..."
+: > "$OUTPUT_GITOPS_FILE"
 for i in $(seq "$START" "$END"); do
   USER_ID=$(printf "user%02d" "$i")
 
   cat >> "$OUTPUT_GITOPS_FILE" <<EOF
-
 ---
 apiVersion: dispatch.d2iq.io/v1alpha2
 kind: GitopsRepository
@@ -74,12 +101,11 @@ spec:
 EOF
 done
 
-echo "Generated GitOps Source YAML: $OUTPUT_GITOPS_FILE"
-
 #############
 #  Ingress #
 ############
 
+echo "Generating Ingress File..."
 : > "$OUTPUT_INGRESS_FILE"
 
 # --- Middleware ---
@@ -97,9 +123,7 @@ for i in $(seq "$START" "$END"); do
   printf "      - /user%02d\n" "$i" >> "$OUTPUT_INGRESS_FILE"
 done
 
-# separator
-echo "" >> "$OUTPUT_INGRESS_FILE"
-echo "---" >> "$OUTPUT_INGRESS_FILE"
+echo -e "\n---" >> "$OUTPUT_INGRESS_FILE"
 
 # --- Ingress ---
 cat >> "$OUTPUT_INGRESS_FILE" <<EOF
@@ -131,6 +155,7 @@ for i in $(seq "$START" "$END"); do
 EOF
 done
 
-echo "Generated Ingress File: $OUTPUT_INGRESS_FILE"
-
-echo "!!Apply project & gitops in Mgmt Cluster and Ingress & secret in Workload Cluster!!"
+echo "------------------------------------------------------------"
+echo "Done!"
+echo "Mgmt Cluster:    kubectl apply -f $OUTPUT_PROJECT_FILE -f $OUTPUT_GITOPS_FILE"
+echo "Workload Cluster: kubectl apply -f $OUTPUT_SECRET_FILE -f $OUTPUT_INGRESS_FILE"

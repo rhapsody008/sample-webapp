@@ -12,28 +12,63 @@
 ## Steps On Web IDE
 1. Clone Git repository & checkout code
 ```
-git clone https://yzlabntnx@gitlab.com/devops-lab5952301/webapp-user01.git
+git clone https://gitlab.ntnxlab.local/lab/webapp-user01.git
 cd webapp-user01
 git checkout origin/main
 ```
 *!! Might need to input password*
 
-2. Make code changes in main.go
-
+2. Create file `main.go`:
 ```
+package main
+
+import (
+	"fmt"
+	"net/http"
+)
+
 func handler(w http.ResponseWriter, r *http.Request) {
-	// ------** Change made here **------
-	fmt.Fprintf(w, "Hello from Nutanix! this is the updated version.")
-	// ---------------------------------
+	fmt.Fprintf(w, "Hello from Nutanix!")
+}
+
+func main() {
+	http.HandleFunc("/", handler)
+	fmt.Println("Starting server on port 8080...")
+	http.ListenAndServe(":8080", nil)
 }
 ```
 
-3. Commit & Push Code
+3. Create file `Dockerfile`:
+```
+# --- STAGE 1: The Build Stage ---
+FROM registry.ntnxlab.local/library/golang:1.23-alpine AS builder
+
+WORKDIR /app
+
+COPY main.go .
+RUN go build -ldflags="-s -w" -o /app/app main.go
+
+# --- STAGE 2: The Final, Minimal Runtime Stage ---
+FROM registry.ntnxlab.local/library/alpine:latest
+
+RUN adduser -D appuser
+USER appuser
+
+WORKDIR /home/appuser/
+
+COPY --from=builder /app/app .
+
+EXPOSE 8080
+
+CMD ["./app"]
+```
+
+4. Commit & Push Code
 
 Check & add after changes are made:
 ```
 git status
-git add main.go
+git add main.go Dockerfile
 ```
 
 Commit & push changes:
@@ -50,4 +85,4 @@ git push origin HEAD:main
 3. NKP Kommander Dashboard - Review CD source
 4. (Optionally Demo) k8s Dashboard - deployment/pod running status
 5. Get ingress IP from CLI/Dashboard
-6. See updated print message on https://*<Ingress_IP>*/user01
+6. See updated print message on https://*<INGRESS_IP>*/user01

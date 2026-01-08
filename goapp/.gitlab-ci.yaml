@@ -3,3 +3,4 @@ include:
     file: 'pipeline.yaml'
     inputs:
       username: user$1
+      replicas: 1

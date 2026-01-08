@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # --- CONFIGURATION ---
-GITLAB_URL="https://gitlab.com"
-PRIVATE_TOKEN="" 
-PARENT_NAMESPACE_ID="121715013"
-NUM_USERS=2
+GITLAB_URL="https://gitlab.ntnxlab.local"
+PRIVATE_TOKEN="glpat-IseIv8j-0OVexZkzgsrPC286MQp1OjEH.01.0w1lfnadv"
+PARENT_NAMESPACE_ID="2"
+NUM_USERS=3
 
 echo "Starting cleanup for Namespace ID: $PARENT_NAMESPACE_ID"
 
